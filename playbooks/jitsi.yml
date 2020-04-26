@@ -1,0 +1,6 @@
+---
+- hosts: jitsi_server
+  become: true
+  connection: local
+  roles:
+    - role: jitsi

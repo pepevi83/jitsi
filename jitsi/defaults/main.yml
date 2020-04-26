@@ -1,0 +1,3 @@
+---
+# defaults file for jitsi
+jitsi_domain_name: "{{ user_jitsi_domain_name }}"

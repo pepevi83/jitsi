@@ -1,0 +1,55 @@
+---
+# tasks file for jitsi
+- name: Setting system hostname
+  hostname:
+    name: "{{ jitsi_domain_name }}"
+
+- name: Add domain to /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ user_jitsi_domain_name }}$'
+    line: "127.0.0.1 {{user_jitsi_domain_name}}"
+    state: present
+
+- name: Enable ufw
+  ufw:
+    state: enabled
+
+- name: Configuring firewall tcp ports
+  ufw:
+    rule: allow
+    port: '"{{item}}"'
+    proto: tcp
+  loop:
+    - 22
+    - 80
+    - 443
+    - 4443
+
+- name: Configuring firewall udp ports
+  ufw:
+    rule: allow
+    port: '"{{item}}"'
+    proto: udp
+  loop:
+    - 10000
+
+- name: Install jitsi galaxy module
+  command: ansible-galaxy install udelarinterior.jitsi_meet
+
+- name: Configure jitsi-meet server
+  roles:
+    - role: geerlingguy.certbot
+      become: yes
+      certbot_create_if_missing: true
+      certbot_admin_email: "webmaster@{{ user_jitsi_domain_name }}"
+      certbot_certs:
+        - domains:
+            - "{{ user_jitsi_domain_name }}"
+      certbot_create_standalone_stop_services: []
+
+    - role: udelarinterior.jitsi_meet
+      jitsi_meet_ssl_cert_path: "/etc/letsencrypt/live/{{ user_jitsi_domain_name }}/fullchain.pem"
+      jitsi_meet_ssl_key_path: "/etc/letsencrypt/live/{{ user_jitsi_domain_name }}/privkey.pem"
+      become: yes
+      tags: jitsi
